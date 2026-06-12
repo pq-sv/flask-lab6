@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% from 'courses/_review_form.html' import render_review_form with context %}
+{% from 'courses/_reviews_list.html' import render_reviews_list with context %}
+
+{% block content %}
+{% set bg_url = course.bg_image.url if course.bg_image else url_for('static', filename='images/polytech_logo.png') %}
+<div class="title-area position-relative" style="background-image: url({{ bg_url }});">
+    <div class="h-100 w-100 py-5 d-flex text-center position-absolute" style="background-color: rgba(0, 0, 0, 0.65);">
+        <div class="m-auto">
+            <h1 class="title mb-3 font-weight-bold">{{ course.name }}</h1>
+            <p class="mb-3 mx-auto">
+                {{ course.category.name }} | <span>★</span> <span>{{ "%.2f" | format(course.rating) }}</span>
+                <span class="text-white-50">({{ course.rating_num }} отзывов)</span>
+            </p>
+            <div class="container">
+                <p class="description w-75 mb-5 mx-auto">
+                    {{ course.short_desc }}
+                </p>
+            </div>
+            {% if current_user.is_authenticated %}
+                <a href="#reviews" class="btn btn-outline-light btn-lg">Оставить отзыв</a>
+            {% else %}
+                <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-outline-light btn-lg">Войти, чтобы оставить отзыв</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <section class="about mb-5">
+        <h2 class="mb-3 text-center text-uppercase font-weight-bold">О курсе</h2>
+        <p>{{ course.full_desc }}</p>
+    </section>
+
+    <section class="program mb-5">
+        <h2 class="mb-3 text-center text-uppercase font-weight-bold">Программа курса</h2>
+        {% if course.themes is defined and course.themes %}
+            {% for theme in course.themes %}
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center">
+                        <h5 class="mb-0">Тема {{ loop.index }}. {{ theme.name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% set outer_loop = loop %}
+                        {% for subtheme in theme.subthemes %}
+                            <p class="card-text mb-3">{{ outer_loop.index }}.{{ loop.index }}. {{ subtheme.name }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-secondary">Программа курса пока не заполнена.</div>
+        {% endif %}
+    </section>
+
+    <section id="reviews" class="reviews mb-5">
+        <div class="d-flex align-items-center mb-3">
+            <h2 class="mb-0 text-uppercase font-weight-bold">Последние отзывы</h2>
+            <a class="btn btn-outline-dark ms-auto" href="{{ url_for('courses.reviews', course_id=course.id) }}">Все отзывы</a>
+        </div>
+        {{ render_reviews_list(last_reviews) }}
+    </section>
+
+    {{ render_review_form(course, rating_options, user_review, review_errors, review_form) }}
+</div>
+
+{% endblock %}

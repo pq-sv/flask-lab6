@@ -1,0 +1,41 @@
+{% macro render_review_form(course, rating_options, user_review, errors={}, form=None) %}
+    <section class="reviews-form mb-5">
+        <h3 class="mb-3">Оставить отзыв</h3>
+        {% if current_user.is_authenticated %}
+            {% if user_review %}
+                <div class="alert alert-info">
+                    <h5 class="alert-heading mb-2">Ваш отзыв уже оставлен</h5>
+                    <div class="mb-1"><strong>Оценка:</strong> {{ user_review.rating }}</div>
+                    <div class="mb-1"><strong>Дата:</strong> {{ user_review.created_at.strftime('%d.%m.%Y %H:%M:%S') }}</div>
+                    <div>{{ user_review.text }}</div>
+                </div>
+            {% else %}
+                <form method="POST" action="{{ url_for('courses.create_review', course_id=course.id, sort=request.args.get('sort', 'new')) }}" novalidate>
+                    <div class="mb-3">
+                        <label for="rating" class="form-label">Оценка</label>
+                        <select class="form-select {% if errors.get('rating') %}is-invalid{% endif %}" id="rating" name="rating">
+                            {% for value, label in rating_options %}
+                                <option value="{{ value }}" {% if (form and form.get('rating') and form.get('rating')|int == value) or (not form or not form.get('rating')) and value == 5 %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if errors.get('rating') %}
+                            <div class="invalid-feedback">{{ errors.get('rating') }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="text" class="form-label">Текст отзыва</label>
+                        <textarea class="form-control {% if errors.get('text') %}is-invalid{% endif %}" id="text" name="text" rows="5" required>{{ form.get('text') if form else '' }}</textarea>
+                        {% if errors.get('text') %}
+                            <div class="invalid-feedback">{{ errors.get('text') }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-dark">Сохранить отзыв</button>
+                </form>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-warning">
+                Чтобы оставить отзыв, необходимо <a href="{{ url_for('auth.login', next=request.path) }}">войти</a>.
+            </div>
+        {% endif %}
+    </section>
+{% endmacro %}
